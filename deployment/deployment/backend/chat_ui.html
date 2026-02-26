@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Assistant</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #fff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Title bar ──────────────────────────────────────────────────────────── */
+    #titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 14px;
+      background: #1890ff;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .title-buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .title-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 11px;
+      cursor: pointer;
+      opacity: 0.85;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .title-btn:hover { opacity: 1; background: rgba(255,255,255,0.15); }
+    #close-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 2px;
+      opacity: 0.85;
+    }
+    #close-btn:hover { opacity: 1; }
+
+    /* ── Message area ───────────────────────────────────────────────────────── */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .msg {
+      max-width: 82%;
+      padding: 8px 11px;
+      border-radius: 12px;
+      font-size: 12.5px;
+      line-height: 1.55;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: #dceeff;
+      color: #1a1a1a;
+      border-bottom-right-radius: 3px;
+    }
+    .msg.assistant, .msg.ai {
+      align-self: flex-start;
+      background: #f1f1f1;
+      color: #1a1a1a;
+      border-bottom-left-radius: 3px;
+    }
+    .msg a { color: #1890ff; text-decoration: underline; }
+
+    /* ── Typing / building indicator ───────────────────────────────────────── */
+    #typing {
+      align-self: flex-start;
+      background: #f1f1f1;
+      color: #888;
+      padding: 8px 11px;
+      border-radius: 12px;
+      border-bottom-left-radius: 3px;
+      font-size: 12px;
+      display: none;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    #typing.building {
+      background: #e6f7ff;
+      color: #0050b3;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    /* ── Input area ─────────────────────────────────────────────────────────── */
+    #input-area {
+      display: flex;
+      gap: 6px;
+      padding: 9px 10px;
+      border-top: 1px solid #eee;
+      flex-shrink: 0;
+    }
+    #input {
+      flex: 1;
+      padding: 7px 10px;
+      border: 1px solid #d9d9d9;
+      border-radius: 8px;
+      font-size: 12.5px;
+      outline: none;
+      resize: none;
+    }
+    #input:focus { border-color: #1890ff; }
+    #send-btn {
+      padding: 7px 14px;
+      background: #1890ff;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 12.5px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    #send-btn:hover { background: #0c7be0; }
+    #send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+  <div id="titlebar">
+    <span>&#x1FA84; BI Genie</span>
+    <div class="title-buttons">
+      <button class="title-btn" onclick="newChat()" title="Start new conversation">New Chat</button>
+      <button id="close-btn" onclick="window.parent.postMessage('close', '*')" title="Close">&#x00D7;</button>
+    </div>
+  </div>
+
+  <div id="messages">
+    <div class="msg ai">Connecting to Superset&#x2026;</div>
+  </div>
+
+  <div id="typing">typing&#x2026;</div>
+
+  <div id="input-area">
+    <input id="input" type="text" placeholder="Describe a chart you want to build …" autocomplete="off" />
+    <button id="send-btn" onclick="send()">Send</button>
+  </div>
+
+  <script>
+    const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+
+    function getSessionId() {
+      var sid = sessionStorage.getItem('bi_genie_sid');
+      var ts  = parseInt(sessionStorage.getItem('bi_genie_ts') || '0', 10);
+      if (sid && (Date.now() - ts) > SESSION_TIMEOUT_MS) {
+        sessionStorage.removeItem('bi_genie_sid');
+        sessionStorage.removeItem('bi_genie_ts');
+        sid = null;
+      }
+      if (!sid) {
+        sid = (typeof crypto !== 'undefined' && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : 'sess-' + Math.random().toString(36).slice(2);
+        sessionStorage.setItem('bi_genie_sid', sid);
+      }
+      sessionStorage.setItem('bi_genie_ts', String(Date.now()));
+      return sid;
+    }
+
+    var SESSION_ID = getSessionId();
+
+    // Use relative URLs — chat_ui is served by the backend itself
+    const API = '';
+    const msgs    = document.getElementById('messages');
+    const input   = document.getElementById('input');
+    const sendBtn = document.getElementById('send-btn');
+    const typing  = document.getElementById('typing');
+
+    const CONFIRM_WORDS = ['yes','yep','ok','okay','sure','correct','right',
+                           'looks good','build it','go ahead','do it','proceed'];
+
+    // ── RBAC: user context from parent Superset page ─────────────────────────
+    var USER_CONTEXT = null;
+    var CONTEXT_READY = false;
+
+    window.addEventListener('message', function(e) {
+      if (!e.data || !e.data.type) return;
+
+      if (e.data.type === 'superset_user_context') {
+        USER_CONTEXT = { user: e.data.user, datasets: e.data.datasets };
+        CONTEXT_READY = true;
+        console.log('BI Genie: user context received for', e.data.user.username,
+                     'with', e.data.datasets.length, 'datasets');
+        // Show ready greeting
+        msgs.innerHTML = '';
+        var name = e.data.user.first_name || e.data.user.username;
+        addMsg('Hi ' + name + '! I can build a Superset dashboard from your data.\n\nTry: "Show monthly sales as a line chart" or "Sales by region as a bar chart"', 'ai');
+        // Restore history if available
+        loadHistory();
+      }
+
+      if (e.data.type === 'superset_session_expired') {
+        msgs.innerHTML = '';
+        addMsg('Your Superset session has expired. Please refresh the page and log in again.', 'ai');
+        sendBtn.disabled = true;
+      }
+    });
+
+    // Standalone fallback: if no parent context after 3 seconds, allow admin mode
+    setTimeout(function() {
+      if (!CONTEXT_READY) {
+        console.warn('BI Genie: no user context received (standalone mode)');
+        CONTEXT_READY = true;
+        msgs.innerHTML = '';
+        addMsg('Hi! I can build a Superset dashboard from your data.\n\nTry: "Show monthly sales as a line chart" or "Sales by region as a bar chart"', 'ai');
+      }
+    }, 3000);
+
+    // Restore previous messages on page load
+    async function loadHistory() {
+      try {
+        var r = await fetch(API + '/history/' + SESSION_ID);
+        var data = await r.json();
+        if (data.messages && data.messages.length > 0) {
+          msgs.innerHTML = '';
+          data.messages.forEach(function(m) { addMsg(m.content, m.role); });
+        }
+      } catch (_) {}
+    }
+
+    // Submit on Enter (not Shift+Enter)
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+    });
+
+    function addMsg(text, role) {
+      var cls = (role === 'user') ? 'user' : 'ai';
+      var div = document.createElement('div');
+      div.className = 'msg ' + cls;
+      div.innerHTML = text.replace(/(https?:\/\/[^\s]+)/g,
+        '<a href="$1" target="_blank">$1</a>');
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function isConfirmMsg(text) {
+      var lower = text.toLowerCase().trim();
+      return CONFIRM_WORDS.some(function(w) { return lower.indexOf(w) !== -1; });
+    }
+
+    function showTyping(building) {
+      if (building) {
+        typing.textContent = 'Building your dashboard\u2026';
+        typing.classList.add('building');
+      } else {
+        typing.innerHTML = 'typing\u2026';
+        typing.classList.remove('building');
+      }
+      msgs.appendChild(typing);
+      typing.style.display = 'block';
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    async function send() {
+      var text = input.value.trim();
+      if (!text) return;
+
+      if (!CONTEXT_READY) {
+        addMsg('Still connecting to Superset\u2026 please try again in a moment.', 'ai');
+        return;
+      }
+
+      input.value = '';
+      sendBtn.disabled = true;
+      addMsg(text, 'user');
+
+      sessionStorage.setItem('bi_genie_ts', String(Date.now()));
+      showTyping(isConfirmMsg(text));
+
+      try {
+        var res = await fetch(API + '/message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: SESSION_ID,
+            message: text,
+            user_context: USER_CONTEXT
+          }),
+        });
+        var data = await res.json();
+        typing.style.display = 'none';
+        typing.classList.remove('building');
+        addMsg(data.reply, 'ai');
+
+        // If dashboard was built, ask parent to refresh datasets
+        if (data.state === 'done') {
+          window.parent.postMessage('refresh_datasets', '*');
+        }
+      } catch (_) {
+        typing.style.display = 'none';
+        typing.classList.remove('building');
+        addMsg('Connection error \u2014 is the backend running?', 'ai');
+      }
+
+      sendBtn.disabled = false;
+      input.focus();
+    }
+
+    async function newChat() {
+      try { await fetch(API + '/reset/' + SESSION_ID, { method: 'POST' }); } catch(_) {}
+      sessionStorage.removeItem('bi_genie_sid');
+      sessionStorage.removeItem('bi_genie_ts');
+      SESSION_ID = getSessionId();
+      msgs.innerHTML = '';
+      var name = (USER_CONTEXT && USER_CONTEXT.user) ? (USER_CONTEXT.user.first_name || USER_CONTEXT.user.username) : '';
+      var greeting = name ? ('Hi ' + name + '! ') : 'Hi! ';
+      addMsg(greeting + 'I can build a Superset dashboard from your data.\n\nTry: "Show monthly sales as a line chart" or "Sales by region as a bar chart"', 'ai');
+    }
+  </script>
+
+</body>
+</html>

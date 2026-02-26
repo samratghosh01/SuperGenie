@@ -1,0 +1,51 @@
+order_id,order_date,region,country,product_category,product_name,customer_type,sales_amount,units_sold,status
+1,2023-01-02,East,United States,Electronics,Laptop Pro 15,Consumer,2305.07,4,completed
+2,2023-01-05,East,United States,Electronics,Smartphone X,Business,3364.35,3,pending
+3,2023-01-07,West,Canada,Software,Cloud Suite,Consumer,1223.12,1,completed
+4,2023-01-20,North,United Kingdom,Electronics,Tablet Air,Government,646.55,2,completed
+5,2023-01-22,South,Germany,Accessories,Wireless Headphones,Consumer,189.99,5,completed
+6,2023-02-01,East,United States,Software,Data Platform,Business,4500.00,1,completed
+7,2023-02-03,West,Canada,Electronics,Laptop Pro 15,Consumer,2305.07,2,completed
+8,2023-02-10,North,United Kingdom,Accessories,USB-C Hub,Consumer,79.99,8,completed
+9,2023-02-14,South,France,Electronics,Smartphone X,Consumer,1121.45,1,pending
+10,2023-02-18,East,United States,Software,Cloud Suite,Government,3669.36,3,completed
+11,2023-03-01,West,Canada,Electronics,Monitor 4K,Business,899.99,4,completed
+12,2023-03-05,North,Germany,Accessories,Mechanical Keyboard,Consumer,149.99,6,completed
+13,2023-03-12,South,France,Software,Data Platform,Business,4500.00,2,completed
+14,2023-03-15,East,United States,Electronics,Tablet Air,Consumer,646.55,3,completed
+15,2023-03-20,West,United Kingdom,Electronics,Laptop Pro 15,Government,6915.21,3,completed
+16,2023-04-02,North,Canada,Software,Cloud Suite,Consumer,1223.12,2,completed
+17,2023-04-08,South,Germany,Electronics,Smartphone X,Business,2242.90,2,pending
+18,2023-04-15,East,France,Accessories,Wireless Headphones,Consumer,569.97,15,completed
+19,2023-04-22,West,United States,Software,Data Platform,Consumer,4500.00,1,completed
+20,2023-04-28,North,United Kingdom,Electronics,Monitor 4K,Business,1799.98,2,completed
+21,2023-05-03,South,Canada,Accessories,USB-C Hub,Consumer,159.98,4,completed
+22,2023-05-10,East,Germany,Electronics,Laptop Pro 15,Business,4610.14,2,completed
+23,2023-05-17,West,France,Software,Cloud Suite,Government,2446.24,2,completed
+24,2023-05-22,North,United States,Electronics,Smartphone X,Consumer,1121.45,1,completed
+25,2023-05-30,South,United Kingdom,Accessories,Mechanical Keyboard,Business,299.98,2,completed
+26,2023-06-05,East,Canada,Electronics,Tablet Air,Consumer,1293.10,4,completed
+27,2023-06-12,West,Germany,Software,Data Platform,Business,9000.00,2,completed
+28,2023-06-18,North,France,Electronics,Monitor 4K,Consumer,899.99,1,pending
+29,2023-06-25,South,United States,Accessories,Wireless Headphones,Consumer,379.98,10,completed
+30,2023-06-30,East,United Kingdom,Software,Cloud Suite,Government,3669.36,3,completed
+31,2023-07-04,West,Canada,Electronics,Laptop Pro 15,Consumer,2305.07,1,completed
+32,2023-07-11,North,Germany,Electronics,Smartphone X,Business,4485.80,4,completed
+33,2023-07-18,South,France,Accessories,USB-C Hub,Consumer,239.97,6,completed
+34,2023-07-25,East,United States,Software,Data Platform,Consumer,4500.00,1,completed
+35,2023-07-31,West,United Kingdom,Electronics,Tablet Air,Business,1293.10,2,completed
+36,2023-08-07,North,Canada,Software,Cloud Suite,Consumer,1223.12,1,completed
+37,2023-08-14,South,Germany,Electronics,Monitor 4K,Government,2699.97,3,completed
+38,2023-08-21,East,France,Accessories,Mechanical Keyboard,Consumer,449.97,3,pending
+39,2023-08-28,West,United States,Electronics,Laptop Pro 15,Business,9220.28,4,completed
+40,2023-08-31,North,United Kingdom,Software,Data Platform,Business,4500.00,1,completed
+41,2023-09-05,South,Canada,Electronics,Smartphone X,Consumer,2242.90,2,completed
+42,2023-09-12,East,Germany,Accessories,Wireless Headphones,Consumer,189.99,5,completed
+43,2023-09-19,West,France,Software,Cloud Suite,Government,4892.48,4,completed
+44,2023-09-26,North,United States,Electronics,Tablet Air,Consumer,646.55,1,completed
+45,2023-09-30,South,United Kingdom,Electronics,Monitor 4K,Business,1799.98,2,completed
+46,2023-10-03,East,Canada,Accessories,USB-C Hub,Consumer,319.96,8,completed
+47,2023-10-10,West,Germany,Electronics,Laptop Pro 15,Consumer,4610.14,2,completed
+48,2023-10-17,North,France,Software,Data Platform,Business,13500.00,3,completed
+49,2023-10-24,South,United States,Electronics,Smartphone X,Consumer,3364.35,3,pending
+50,2023-10-31,East,United Kingdom,Accessories,Mechanical Keyboard,Government,749.95,5,completed

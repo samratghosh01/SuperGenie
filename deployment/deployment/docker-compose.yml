@@ -1,0 +1,81 @@
+services:
+
+  # ── Superset metadata store ───────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: superset
+      POSTGRES_USER: superset
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-superset}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U superset"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ── Superset cache ────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ── Apache Superset ───────────────────────────────────────────────────────────
+  superset:
+    build: ./superset
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:-change-me-in-production}
+      DATABASE_URL: postgresql+psycopg2://superset:${POSTGRES_PASSWORD:-superset}@db:5432/superset
+      REDIS_URL: redis://redis:6379/0
+      PYTHONPATH: /app/pythonpath
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-superset}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:9000}
+    ports:
+      - "9088:8088"
+    volumes:
+      - ./superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+      - ./superset/init.sh:/app/init.sh
+      - ./data:/app/data:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["/bin/bash", "/app/init.sh"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8088/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 180s
+    restart: unless-stopped
+
+  # ── FastAPI AI backend ────────────────────────────────────────────────────────
+  backend:
+    build: ./backend
+    environment:
+      LITELLM_API_KEY: ${LITELLM_API_KEY}
+      LITELLM_URL: ${LITELLM_URL}
+      LLM_MODEL: ${LLM_MODEL:-claude-haiku-4-5@20251001}
+      SUPERSET_URL: http://superset:8088
+      SUPERSET_ADMIN_USER: admin
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD:-admin}
+      SUPERSET_EXTERNAL_URL: ${SUPERSET_EXTERNAL_URL:-http://localhost:9088}
+      DATABASE_URL: postgresql://superset:${POSTGRES_PASSWORD:-superset}@db:5432/superset
+      LLM_SKIP_TLS_VERIFY: ${LLM_SKIP_TLS_VERIFY:-false}
+    ports:
+      - "9000:8000"
+    depends_on:
+      superset:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db_data:
